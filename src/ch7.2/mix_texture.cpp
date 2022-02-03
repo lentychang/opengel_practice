@@ -13,9 +13,9 @@
 
 const std::string PROJ_DIR = "/home/lenty/scripts/cpp/opengl/";
 
-const std::string VERTEX_SRC = PROJ_DIR + "src/ch7.2_vertex.sd";
+const std::string VERTEX_SRC = PROJ_DIR + "src/ch7.2/vertex.sd";
 
-const std::string FRAGMENT_SRC = PROJ_DIR + "src/ch7.2_fragment.sd";
+const std::string FRAGMENT_SRC = PROJ_DIR + "src/ch7.2/fragment.sd";
 
 const std::string TEXTURE_PATH_FLOOR = PROJ_DIR + "assets/floor.jpg";
 const std::string TEXTURE_PATH_WALL = PROJ_DIR + "assets/wall.jpg";

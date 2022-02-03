@@ -1,4 +1,12 @@
+#include <chrono>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/trigonometric.hpp>
+#include <iostream>
+#define STB_IMAGE_IMPLEMENTATION
 #include "glad/glad.h"
+#include "stb_image.h"
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <algorithm>
@@ -7,13 +15,19 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <thread>
 #include <vector>
 
-constexpr const char *VERTEX_SRC =
-    "/home/lenty/scripts/cpp/opengl/src/ch6.3ex2_vertex.sd";
 
-constexpr const char *FRAGMENT_SRC =
-    "/home/lenty/scripts/cpp/opengl/src/ch6.3ex2_fragement.sd";
+const std::string PROJ_DIR = "/home/lenty/scripts/cpp/opengl/";
+const std::string SUB_DIR = "ch9.8_2";
+
+const std::string VERTEX_SRC = PROJ_DIR + "src/" + SUB_DIR + "/vertex.sd";
+
+const std::string FRAGMENT_SRC = PROJ_DIR + "src/" + SUB_DIR + "/fragment.sd";
+
+const std::string TEXTURE_PATH_FLOOR = PROJ_DIR + "assets/floor.jpg";
+const std::string TEXTURE_PATH_WALL = PROJ_DIR + "assets/wall.jpg";
 
 class Shader {
 public:
@@ -77,11 +91,48 @@ void load_glad() {
 
 unsigned int create_vao() {
   float vertices[] = {
-      // positions // colors
-      0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom right
-      -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom left
-      0.0f,  0.5f,  0.0f, 0.0f, 0.0f, 1.0f  // top
+      // positions        // texture st
+      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
+      0.5f,  -0.5f, -0.5f, 1.0f, 0.0f, //
+      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
+      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
 
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
+      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
+      -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, //
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+
+      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
+      -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, //
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
+
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
+      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
+      0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, //
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+      0.5f,  -0.5f, -0.5f, 1.0f, 1.0f, //
+      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+
+      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
+      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+      -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, //
+      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f  //
   };
 
   unsigned int VBO, VAO;
@@ -96,10 +147,11 @@ unsigned int create_vao() {
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
   // layout num, type,xxx  ,stride, offset
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                         (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
 
@@ -115,7 +167,7 @@ unsigned int create_ebo(int vao) {
   unsigned int indices[] = {
       // note that we start from 0!
       0, 1, 2, // first Triangle
-               // 1, 2, 3  // second Triangle
+      2, 3, 0  // second Triangle
   };
 
   unsigned int EBO;
@@ -153,62 +205,38 @@ void clean_buffer() {
   }
 }
 
-int main() {
+unsigned int create_texture(const char *texture_path) {
+  unsigned int texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  // set the texture wrapping/filtering options (on currently bound texture)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  init_glfw();
+  int image_w, image_h, image_nCh;
+  stbi_set_flip_vertically_on_load(true);
+  unsigned char *image_data =
+      stbi_load(texture_path, &image_w, &image_h, &image_nCh, 0);
 
-  auto window = create_window();
-
-  load_glad();
-
-  Shader shader{VERTEX_SRC, FRAGMENT_SRC};
-
-  // prepare data
-  auto VAO = create_vao();
-  auto EBO = create_ebo(VAO);
-
-  // Render loop
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-  std::cout << "press [Esc] to close the window" << std::endl;
-  float theta = 0;
-  while (!glfwWindowShouldClose(window)) {
-    // process input
-    processInput(window);
-
-    // render
-    // ------
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // draw our first triangle
-    shader.use();
-    shader.setFloat("displacement_x", 0.5*std::sin(theta));
-    
-    
-    glBindVertexArray(VAO);
-
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    // glDrawArrays(GL_TRIANGLES, 0, 3);
-    // glBindVertexArray(0); // no need to unbind it every time
-
-    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved
-    // etc.)
-    // -------------------------------------------------------------------------------
-
-    // Check and call events and swap buffers
-    glfwSwapBuffers(window);
-    glfwPollEvents();
-    theta+= M_PI/180.0;
+  if (image_data) {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_w, image_h, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, image_data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+  } else {
+    std::cout << "Failed to load texture" << std::endl;
   }
 
-  clean_buffer();
-  // Close
-  glfwTerminate();
-
-  return 0;
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_w, image_h, 0, GL_RGB,
+               GL_UNSIGNED_BYTE, image_data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  stbi_image_free(image_data);
+  return texture;
 }
 
+// ===============================
 Shader::Shader(const char *vertexPath, const char *fragmentPath) {
   std::string vertexCode;
   std::string fragmentCode;
@@ -217,8 +245,9 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath) {
   const char *vShaderCode = vertexCode.c_str();
   const char *fShaderCode = fragmentCode.c_str();
 
-  auto vertexShader = compile_shader(GL_VERTEX_SHADER, vShaderCode,"vertex");
-  auto fragmentShader = compile_shader(GL_FRAGMENT_SHADER, fShaderCode,"fragement");
+  auto vertexShader = compile_shader(GL_VERTEX_SHADER, vShaderCode, "vertex");
+  auto fragmentShader =
+      compile_shader(GL_FRAGMENT_SHADER, fShaderCode, "fragement");
 
   mId = create_program(vertexShader, fragmentShader);
 }

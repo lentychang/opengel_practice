@@ -1,3 +1,9 @@
+#include <chrono>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/trigonometric.hpp>
+#include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
 #include "glad/glad.h"
 #include "stb_image.h"
@@ -9,15 +15,17 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <thread>
 #include <vector>
 
 const std::string PROJ_DIR = "/home/lenty/scripts/cpp/opengl/";
+const std::string SUB_DIR = "ch9.8";
 
-const std::string VERTEX_SRC = PROJ_DIR + "src/ch7.1_vertex.sd";
+const std::string VERTEX_SRC = PROJ_DIR + "src/" + SUB_DIR + "/vertex.sd";
 
-const std::string FRAGMENT_SRC = PROJ_DIR + "src/ch7.1_fragment.sd";
+const std::string FRAGMENT_SRC = PROJ_DIR + "src/" + SUB_DIR + "/fragment.sd";
 
-const std::string TEXTURE_PATH_FLOOR = PROJ_DIR + "assets/floor.png";
+const std::string TEXTURE_PATH_FLOOR = PROJ_DIR + "assets/floor.jpg";
 const std::string TEXTURE_PATH_WALL = PROJ_DIR + "assets/wall.jpg";
 
 class Shader {
@@ -82,12 +90,48 @@ void load_glad() {
 
 unsigned int create_vao() {
   float vertices[] = {
-      // positions        // colors        // texture st
-      0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom right
-      -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, // bottom left
-      -0.5f, 0.5f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, // top left
-      0.5f,  0.5f,  0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, // top right
+      // positions        // texture st
+      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
+      0.5f,  -0.5f, -0.5f, 1.0f, 0.0f, //
+      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
+      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
 
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
+      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
+      -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, //
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+
+      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
+      -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, //
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
+
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
+      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
+      0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, //
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+      0.5f,  -0.5f, -0.5f, 1.0f, 1.0f, //
+      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+
+      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
+      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+      -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, //
+      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f  //
   };
 
   unsigned int VBO, VAO;
@@ -102,16 +146,13 @@ unsigned int create_vao() {
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
   // layout num, type,xxx  ,stride, offset
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                         (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
-
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                        (void *)(6 * sizeof(float)));
-  glEnableVertexAttribArray(2);
 
   // note that this is allowed, the call to glVertexAttribPointer registered VBO
   // as the vertex attribute's bound vertex buffer object so afterwards we can
@@ -163,6 +204,37 @@ void clean_buffer() {
   }
 }
 
+unsigned int create_texture(const char *texture_path) {
+  unsigned int texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  // set the texture wrapping/filtering options (on currently bound texture)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  int image_w, image_h, image_nCh;
+  stbi_set_flip_vertically_on_load(true);
+  unsigned char *image_data =
+      stbi_load(texture_path, &image_w, &image_h, &image_nCh, 0);
+
+  if (image_data) {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_w, image_h, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, image_data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+  } else {
+    std::cout << "Failed to load texture" << std::endl;
+  }
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_w, image_h, 0, GL_RGB,
+               GL_UNSIGNED_BYTE, image_data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  stbi_image_free(image_data);
+  return texture;
+}
+
 int main() {
 
   init_glfw();
@@ -178,44 +250,51 @@ int main() {
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   // Prepare Texture data
+  unsigned int texture_floor = create_texture(TEXTURE_PATH_FLOOR.c_str());
+  unsigned int texture_wall = create_texture(TEXTURE_PATH_WALL.c_str());
 
-  unsigned int texture;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  // set the texture wrapping/filtering options (on currently bound texture)
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  int floor_texture_w, floor_texture_h, floor_texture_nCh;
-  stbi_set_flip_vertically_on_load(true);
-  unsigned char *texture_data_floor =
-      stbi_load(TEXTURE_PATH_FLOOR.c_str(), &floor_texture_w, &floor_texture_h,
-                &floor_texture_nCh, 0);
-
-  if (texture_data_floor) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, floor_texture_w, floor_texture_h, 0,
-                 GL_RGB, GL_UNSIGNED_BYTE, texture_data_floor);
-    glGenerateMipmap(GL_TEXTURE_2D);
-  } else {
-    std::cout << "Failed to load texture" << std::endl;
-  }
-
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, floor_texture_w, floor_texture_h, 0,
-               GL_RGB, GL_UNSIGNED_BYTE, texture_data_floor);
-  glGenerateMipmap(GL_TEXTURE_2D);
-  stbi_image_free(texture_data_floor);
-
-  int wall_texture_w, wall_texture_h, wall_texture_nCh;
-
-  unsigned char *texture_data_wall =
-      stbi_load(TEXTURE_PATH_WALL.c_str(), &wall_texture_w, &wall_texture_h,
-                &wall_texture_nCh, 0);
+  // draw our first triangle
+  shader.use();
+  // either set it manually like so:
+  shader.setInt("texture1", 0);
+  // or set it via the texture class
+  shader.setInt("texture2", 1);
+  shader.setInt("texture2_percent", 1.0f);
 
   std::cout << "press [Esc] to close the window" << std::endl;
+  
+  {
+    glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+    glm::mat4 trans = glm::mat4(1.0f);
+    trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
+    vec = trans * vec;
+    std::cout << vec.x << vec.y << vec.z << std::endl;
+  }
+
+  // rotate our model (rectangle plane with picture) with x-Axis , and rotate it
+  // by 55 degrees
+  glm::mat4 model = glm::mat4(1.0f);
+  model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+  glm::mat4 view = glm::mat4(1.0f);
+  // note that we’re translating the scene in the reverse direction
+
+  // Move Camera from (0,0,0) to (0,0,3) which equals to move all scene downward
+  // (0,0,-3)
+  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+  glm::mat4 projection;
+  projection =
+      glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+
   float theta = 0;
+  float rotation_step = static_cast<float>(M_PI) / 180.0f / 10.0f;
+
+  float count = 0.0f;
+  float time_start = glfwGetTime();
+  float time_sum = 0.0f;
+  glEnable(GL_DEPTH_TEST);
+
   while (!glfwWindowShouldClose(window)) {
     // process input
     processInput(window);
@@ -223,18 +302,29 @@ int main() {
     // render
     // ------
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    // This has to be run before rendering, it will clean the z Depth buffer
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+    model = glm::rotate(model, rotation_step, glm::vec3(0.5f, 1.0f, 0.0f));
+
+    int modelLoc = glGetUniformLocation(shader.getProgramId(), "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    int viewLoc = glGetUniformLocation(shader.getProgramId(), "view");
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    int projectionLoc =
+        glGetUniformLocation(shader.getProgramId(), "projection");
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     glActiveTexture(GL_TEXTURE0); // activate texture unit first
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, texture_floor);
 
-    // draw our first triangle
-    shader.use();
+    glActiveTexture(GL_TEXTURE1); // activate texture unit first
+    glBindTexture(GL_TEXTURE_2D, texture_wall);
 
     glBindVertexArray(VAO);
 
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    // glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
     // glBindVertexArray(0); // no need to unbind it every time
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved
@@ -244,7 +334,19 @@ int main() {
     // Check and call events and swap buffers
     glfwSwapBuffers(window);
     glfwPollEvents();
-    theta += M_PI / 180.0;
+    theta += rotation_step;
+    theta = std::fmod(theta, static_cast<float>(M_PI) * 2.0f);
+
+    // std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    float time_end = glfwGetTime();
+    time_sum += time_end - time_start;
+    time_start = time_end;
+    ++count;
+    if (count > 100) {
+      std::cout << "FPS: " << count / time_sum << std::endl;
+      time_sum = 0.0f;
+      count = 0.0f;
+    }
   }
 
   clean_buffer();

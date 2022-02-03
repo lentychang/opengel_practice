@@ -10,10 +10,10 @@
 #include <vector>
 
 constexpr const char *VERTEX_SRC =
-    "/home/lenty/scripts/cpp/opengl/src/ch6.3ex4_vertex.sd";
+    "/home/lenty/scripts/cpp/opengl/src/ch6.3_ex3/vertex.sd";
 
 constexpr const char *FRAGMENT_SRC =
-    "/home/lenty/scripts/cpp/opengl/src/ch6.3ex4_fragement.sd";
+    "/home/lenty/scripts/cpp/opengl/src/ch6.3_ex3/fragement.sd";
 
 class Shader {
 public:
@@ -182,9 +182,7 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     // draw our first triangle
-    shader.use();
-    shader.setFloat("displacement_x", 0.5*std::sin(theta));
-    
+    shader.use();    
     
     glBindVertexArray(VAO);
 

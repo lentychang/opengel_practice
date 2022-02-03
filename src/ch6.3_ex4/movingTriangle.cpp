@@ -9,10 +9,11 @@
 #include <sstream>
 #include <vector>
 
-constexpr const char *FRAGMENT_SRC =
-    "/home/lenty/scripts/cpp/opengl/src/ch6.3_fragement.sd";
 constexpr const char *VERTEX_SRC =
-    "/home/lenty/scripts/cpp/opengl/src/ch6.3_vertex.sd";
+    "/home/lenty/scripts/cpp/opengl/src/ch6.3_ex4/vertex.sd";
+
+constexpr const char *FRAGMENT_SRC =
+    "/home/lenty/scripts/cpp/opengl/src/ch6.3_ex4/fragement.sd";
 
 class Shader {
 public:
@@ -170,6 +171,7 @@ int main() {
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   std::cout << "press [Esc] to close the window" << std::endl;
+  float theta = 0;
   while (!glfwWindowShouldClose(window)) {
     // process input
     processInput(window);
@@ -181,6 +183,9 @@ int main() {
 
     // draw our first triangle
     shader.use();
+    shader.setFloat("displacement_x", 0.5*std::sin(theta));
+    
+    
     glBindVertexArray(VAO);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -194,6 +199,7 @@ int main() {
     // Check and call events and swap buffers
     glfwSwapBuffers(window);
     glfwPollEvents();
+    theta+= M_PI/180.0;
   }
 
   clean_buffer();
