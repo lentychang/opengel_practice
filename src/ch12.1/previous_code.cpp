@@ -5,7 +5,7 @@
 #include <glm/trigonometric.hpp>
 #include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
-#include "common/shader.h"
+#include "glad/glad.h"
 #include "stb_image.h"
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
@@ -18,15 +18,18 @@
 #include <thread>
 #include <vector>
 
+unsigned int VBO;
+
 const std::string PROJ_DIR = "/home/lenty/scripts/cpp/opengl/";
-const std::string SUB_DIR = "ch9.8_2";
+const std::string SUB_DIR = "ch12.1";
 
 const std::string VERTEX_SRC = PROJ_DIR + "src/" + SUB_DIR + "/vertex.sd";
-
 const std::string FRAGMENT_SRC = PROJ_DIR + "src/" + SUB_DIR + "/fragment.sd";
+
 
 const std::string TEXTURE_PATH_FLOOR = PROJ_DIR + "assets/floor.jpg";
 const std::string TEXTURE_PATH_WALL = PROJ_DIR + "assets/wall.jpg";
+
 
 std::vector<unsigned int> vbos{};
 std::vector<unsigned int> vaos{};
@@ -65,51 +68,46 @@ void load_glad() {
 
 unsigned int create_vao() {
   float vertices[] = {
-      // positions        // texture st
-      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
-      0.5f,  -0.5f, -0.5f, 1.0f, 0.0f, //
-      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
-      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
-      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
-      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
-
-      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
-      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
-      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
-      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
-      -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, //
-      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
-
-      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
-      -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, //
-      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
-      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
-      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
-      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
-
-      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
-      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
-      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
-      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
-      0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, //
-      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
-
-      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
-      0.5f,  -0.5f, -0.5f, 1.0f, 1.0f, //
-      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
-      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
-      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
-      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
-
-      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
-      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
-      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
-      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
-      -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, //
-      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f  //
+      // positions        
+      -0.5f, -0.5f, -0.5f,
+      0.5f,  -0.5f, -0.5f,
+      0.5f,  0.5f,  -0.5f,
+      0.5f,  0.5f,  -0.5f,
+      -0.5f, 0.5f,  -0.5f,
+      -0.5f, -0.5f, -0.5f,
+      -0.5f, -0.5f, 0.5f, 
+      0.5f,  -0.5f, 0.5f, 
+      0.5f,  0.5f,  0.5f, 
+      0.5f,  0.5f,  0.5f, 
+      -0.5f, 0.5f,  0.5f, 
+      -0.5f, -0.5f, 0.5f, 
+      -0.5f, 0.5f,  0.5f, 
+      -0.5f, 0.5f,  -0.5f,
+      -0.5f, -0.5f, -0.5f,
+      -0.5f, -0.5f, -0.5f,
+      -0.5f, -0.5f, 0.5f, 
+      -0.5f, 0.5f,  0.5f, 
+      0.5f,  0.5f,  0.5f, 
+      0.5f,  0.5f,  -0.5f,
+      0.5f,  -0.5f, -0.5f,
+      0.5f,  -0.5f, -0.5f,
+      0.5f,  -0.5f, 0.5f, 
+      0.5f,  0.5f,  0.5f, 
+      -0.5f, -0.5f, -0.5f,
+      0.5f,  -0.5f, -0.5f,
+      0.5f,  -0.5f, 0.5f, 
+      0.5f,  -0.5f, 0.5f, 
+      -0.5f, -0.5f, 0.5f, 
+      -0.5f, -0.5f, -0.5f,
+      -0.5f, 0.5f,  -0.5f,
+      0.5f,  0.5f,  -0.5f,
+      0.5f,  0.5f,  0.5f, 
+      0.5f,  0.5f,  0.5f, 
+      -0.5f, 0.5f,  0.5f, 
+      -0.5f, 0.5f,  -0.5f,
   };
 
-  unsigned int VBO, VAO;
+  unsigned int VAO;
 
   // bind the Vertex Array Object first, then bind and set vertex buffer(s), and
   // then configure vertex attributes(s).
@@ -121,19 +119,9 @@ unsigned int create_vao() {
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
-  // layout num, type,xxx  ,stride, offset
-
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-                        (void *)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-
-  // note that this is allowed, the call to glVertexAttribPointer registered VBO
-  // as the vertex attribute's bound vertex buffer object so afterwards we can
-  // safely unbind
-  vaos.push_back(VAO);
-  vbos.push_back(VBO);
+  // args: layout num, type,xxx  ,stride, offset
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);  
   return VAO;
 }
 

@@ -1,8 +1,12 @@
 macro(compile_executable folederName filename)
   add_executable(${filename} glad.c ${folederName}/${filename}.cpp)
-  target_include_directories(${filename} PUBLIC /usr/include ${folederName})
-  target_link_libraries(${filename} PRIVATE glfw GL ${CMAKE_DL_LIBS})
+  target_include_directories(
+    ${filename} PUBLIC /usr/include ${PROJECT_SOURCE_DIR}/src ${folederName})
+  target_link_libraries(${filename} PRIVATE glfw GL ${CMAKE_DL_LIBS} shader
+                                            camera)
 endmacro()
+
+add_subdirectory(common)
 
 compile_executable(ch5 create_draw_triangle)
 compile_executable(ch6.1 uniform_variable)
@@ -17,3 +21,10 @@ compile_executable(ch8.17 glm)
 compile_executable(ch9.7 coordinates)
 compile_executable(ch9.8 cubic)
 compile_executable(ch9.8_2 cubics)
+compile_executable(ch10.1 basic_camera)
+compile_executable(ch10.2 movableCamera)
+compile_executable(ch10.3 walkAroundCamera)
+compile_executable(ch10.7 mouseMove)
+compile_executable(ch10.8 zoom)
+compile_executable(ch10.9 camera_class)
+compile_executable(ch12.1 lightSource)

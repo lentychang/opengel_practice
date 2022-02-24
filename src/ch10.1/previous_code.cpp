@@ -19,7 +19,7 @@
 #include <vector>
 
 const std::string PROJ_DIR = "/home/lenty/scripts/cpp/opengl/";
-const std::string SUB_DIR = "ch9.8_2";
+const std::string SUB_DIR = "ch10.1";
 
 const std::string VERTEX_SRC = PROJ_DIR + "src/" + SUB_DIR + "/vertex.sd";
 

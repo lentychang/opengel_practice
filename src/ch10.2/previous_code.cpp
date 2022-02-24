@@ -1,4 +1,5 @@
 #include <chrono>
+#include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -19,7 +20,7 @@
 #include <vector>
 
 const std::string PROJ_DIR = "/home/lenty/scripts/cpp/opengl/";
-const std::string SUB_DIR = "ch9.8_2";
+const std::string SUB_DIR = "ch10.2";
 
 const std::string VERTEX_SRC = PROJ_DIR + "src/" + SUB_DIR + "/vertex.sd";
 
@@ -35,6 +36,21 @@ std::vector<unsigned int> ebos{};
 void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
+}
+
+void processKeyEvent(GLFWwindow *window, glm::vec3& cameraPos,
+                     glm::vec3& cameraFront, glm::vec3& cameraUp) {
+  static const float cameraSpeed = 0.1f; // adjust accordingly
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    cameraPos += cameraSpeed * cameraFront;
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    cameraPos -= cameraSpeed * cameraFront;
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    cameraPos -=
+        glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    cameraPos +=
+        glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 }
 
 void init_glfw() {

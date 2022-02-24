@@ -1,4 +1,5 @@
 #include "glad/glad.h"
+#include "common/shader.h"
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <algorithm>
@@ -14,31 +15,6 @@ constexpr const char *VERTEX_SRC =
 
 constexpr const char *FRAGMENT_SRC =
     "/home/lenty/scripts/cpp/opengl/src/ch6.3_ex3/fragement.sd";
-
-class Shader {
-public:
-  // constructor reads and builds the shader
-  Shader(const char *vertexPath, const char *fragmentPath);
-  // use/activate the shader
-  void use();
-  // utility uniform functions
-  void setBool(const std::string &name, bool value) const;
-  void setInt(const std::string &name, int value) const;
-  void setFloat(const std::string &name, float value) const;
-  unsigned int getProgramId();
-  ~Shader();
-
-private:
-  // the program ID
-  unsigned int mId{std::numeric_limits<unsigned int>::max()};
-
-  void read_shader_file(const char *vertexPath, const char *fragmentPath,
-                        std::string *vertexCode, std::string *fragCode);
-  unsigned int compile_shader(GLenum shaderType, const char *shaderCode,
-                              std::string const &shader_name);
-  unsigned int create_program(unsigned int vertexShader,
-                              unsigned int fragementShader);
-};
 
 std::vector<unsigned int> vbos{};
 std::vector<unsigned int> vaos{};
@@ -206,98 +182,3 @@ int main() {
 
   return 0;
 }
-
-Shader::Shader(const char *vertexPath, const char *fragmentPath) {
-  std::string vertexCode;
-  std::string fragmentCode;
-
-  read_shader_file(vertexPath, fragmentPath, &vertexCode, &fragmentCode);
-  const char *vShaderCode = vertexCode.c_str();
-  const char *fShaderCode = fragmentCode.c_str();
-
-  auto vertexShader = compile_shader(GL_VERTEX_SHADER, vShaderCode,"vertex");
-  auto fragmentShader = compile_shader(GL_FRAGMENT_SHADER, fShaderCode,"fragement");
-
-  mId = create_program(vertexShader, fragmentShader);
-}
-
-void Shader::read_shader_file(const char *vertexPath, const char *fragmentPath,
-                              std::string *vertexCode, std::string *fragCode) {
-  try {
-    std::ifstream vShaderFile{vertexPath};
-    std::ifstream fShaderFile{fragmentPath};
-
-    std::stringstream vShaderStream, fShaderStream;
-    // read file’s buffer contents into streams
-    vShaderStream << vShaderFile.rdbuf();
-    fShaderStream << fShaderFile.rdbuf();
-    // close file handlers
-    vShaderFile.close();
-    fShaderFile.close();
-    // convert stream into string
-    *vertexCode = vShaderStream.str();
-    *fragCode = fShaderStream.str();
-  } catch (std::ifstream::failure &e) {
-    std::cout << "ERROR: SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
-  }
-}
-
-unsigned int Shader::compile_shader(GLenum shaderType, const char *shaderCode,
-                                    std::string const &shader_name) {
-  int success;
-  char infoLog[512];
-  // vertex Shader
-  auto shader = glCreateShader(shaderType);
-  glShaderSource(shader, 1, &shaderCode, NULL);
-  glCompileShader(shader);
-  // print compile errors if any
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-  if (!success) {
-    glGetShaderInfoLog(shader, 512, NULL, infoLog);
-    std::cout << "ERROR Failed to compile SHADER('" << shader_name << "',"
-              << shaderType << ")\n"
-              << infoLog << std::endl;
-  };
-  return shader;
-}
-
-unsigned int Shader::create_program(unsigned int vertex,
-                                    unsigned int fragment) {
-  int success;
-  char infoLog[512];
-  unsigned int id = glCreateProgram();
-  glAttachShader(id, vertex);
-  glAttachShader(id, fragment);
-  glLinkProgram(id);
-  // print linking errors if any
-  glGetProgramiv(id, GL_LINK_STATUS, &success);
-  if (!success) {
-    glGetProgramInfoLog(id, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
-              << infoLog << std::endl;
-  }
-  // delete shaders; they’re linked into our program and no longer necessary
-  glDeleteShader(vertex);
-  glDeleteShader(fragment);
-  return id;
-}
-
-void Shader::use() { glUseProgram(mId); }
-
-void Shader::setBool(const std::string &name, bool value) const {
-  glUniform1i(glGetUniformLocation(mId, name.c_str()), (int)value);
-}
-void Shader::setInt(const std::string &name, int value) const {
-  glUniform1i(glGetUniformLocation(mId, name.c_str()), value);
-}
-void Shader::setFloat(const std::string &name, float value) const {
-  glUniform1f(glGetUniformLocation(mId, name.c_str()), value);
-}
-
-Shader::~Shader() {
-  // if (mId != std::numeric_limits<unsigned int>::max()) {
-  //   glDeleteProgram(mId);
-  // }
-}
-
-unsigned int Shader::getProgramId() { return mId; }

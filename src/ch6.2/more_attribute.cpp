@@ -1,4 +1,5 @@
 #include "glad/glad.h"
+#include "common/shader.h"
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <algorithm>
