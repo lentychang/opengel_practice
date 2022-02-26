@@ -3,7 +3,7 @@ macro(compile_executable folederName filename)
   target_include_directories(
     ${filename} PUBLIC /usr/include ${PROJECT_SOURCE_DIR}/src ${folederName})
   target_link_libraries(${filename} PRIVATE glfw GL ${CMAKE_DL_LIBS} shader
-                                            camera)
+                                            camera Texture2D)
 endmacro()
 
 add_subdirectory(common)

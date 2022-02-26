@@ -1,5 +1,5 @@
-#include "previous_code.cpp"
 #include "common/Camera.h"
+#include "previous_code.cpp"
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <glm/fwd.hpp>
@@ -22,7 +22,7 @@ bool left_key_pressed = false;
 bool firstMouse = true;
 
 // timing
-float deltaTime = 0.0f;	// time between current frame and last frame
+float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame = 0.0f;
 
 int main() {
@@ -46,7 +46,6 @@ int main() {
   unsigned int VAO;
   { // prepare data
     VAO = create_vao();
-    auto EBO = create_ebo(VAO);
 
     // Prepare Texture data
     texture_floor = create_texture(TEXTURE_PATH_FLOOR.c_str());
@@ -83,13 +82,14 @@ int main() {
   float lastFrame = 0.0f; // Time of last frame
 
   while (!glfwWindowShouldClose(window)) {
-    float currentFrame = glfwGetTime();
+    float currentFrame = static_cast<float>(glfwGetTime());
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
     // [process input]
     processInput(window);
-    processKeyEvent(window, camera.Position, camera.Front, camera.Up, deltaTime);
+    processKeyEvent(window, camera.Position, camera.Front, camera.Up,
+                    deltaTime);
 
     // [render]
     // ------
@@ -104,10 +104,13 @@ int main() {
 
     glm::mat4 view, projection;
 
-    view = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
+    view =
+        glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
 
-    projection =
-        glm::perspective(glm::radians(camera.Zoom), static_cast<float>(SCR_WIDTH / SCR_WIDTH), 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(camera.Zoom),
+                                  static_cast<float>(SCR_WIDTH) /
+                                      static_cast<float>(SCR_HEIGHT),
+                                  0.1f, 100.0f);
 
     for (size_t i = 0; i < 10; ++i) {
       glm::mat4 model = glm::mat4(1.0f);
@@ -141,7 +144,7 @@ int main() {
       theta += rotation_step;
       theta = std::fmod(theta, static_cast<float>(M_PI) * 2.0f);
 
-      time_end = glfwGetTime();
+      time_end = static_cast<float>(glfwGetTime());
       time_sum += time_end - time_start;
       time_start = time_end;
       ++count;
@@ -160,23 +163,27 @@ int main() {
   return 0;
 }
 
-
 void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
   static float lastX = 400, lastY = 300;
   static float yaw = -90.0f, pitch = 0.0f;
-
   static constexpr float sensitivity = 0.1f;
+
+  static constexpr float max_pitch = 89.0f;
+
+  float x = static_cast<float>(xpos);
+  float y = static_cast<float>(ypos);
+
   if (left_key_pressed) {
     if (firstMouse) {
-      lastX = xpos;
-      lastY = ypos;
+      lastX = x;
+      lastY = y;
       firstMouse = false;
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed: y ranges bottom to top
-    lastX = xpos;
-    lastY = ypos;
+    float xoffset = x - lastX;
+    float yoffset = lastY - y; // reversed: y ranges bottom to top
+    lastX = x;
+    lastY = y;
 
     xoffset *= sensitivity;
     yoffset *= sensitivity;
@@ -184,10 +191,10 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     yaw += xoffset;
     pitch += yoffset;
 
-    if (pitch > 89.0f)
-      pitch = 89.0f;
-    if (pitch < -89.0f)
-      pitch = -89.0f;
+    if (pitch > max_pitch)
+      pitch = max_pitch;
+    if (pitch < -max_pitch)
+      pitch = -max_pitch;
     glm::vec3 direction;
     direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
     direction.y = sin(glm::radians(pitch));
@@ -209,7 +216,7 @@ void on_mouse_click(GLFWwindow *window, int button, int action, int mods) {
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-  camera.Zoom -= (float)yoffset;
+  camera.Zoom -= static_cast<float>(yoffset);
   if (camera.Zoom < 1.0f)
     camera.Zoom = 1.0f;
   if (camera.Zoom > 45.0f)

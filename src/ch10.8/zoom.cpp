@@ -15,18 +15,22 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
   static float lastX = 400, lastY = 300;
   static float yaw = -90.0f, pitch = 0.0f;
 
+  float x = static_cast<float>(xpos);
+  float y = static_cast<float>(ypos);
+
   static constexpr float sensitivity = 0.1f;
   if (left_key_pressed) {
     if (firstMouse) {
-      lastX = xpos;
-      lastY = ypos;
+      lastX = x;
+      lastY = y;
       firstMouse = false;
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed: y ranges bottom to top
-    lastX = xpos;
-    lastY = ypos;
+    float xoffset = static_cast<float>(xpos - lastX);
+    float yoffset =
+        static_cast<float>(lastY - ypos); // reversed: y ranges bottom to top
+    lastX = x;
+    lastY = y;
 
     xoffset *= sensitivity;
     yoffset *= sensitivity;
@@ -89,7 +93,6 @@ int main() {
   unsigned int VAO;
   { // prepare data
     VAO = create_vao();
-    auto EBO = create_ebo(VAO);
 
     // Prepare Texture data
     texture_floor = create_texture(TEXTURE_PATH_FLOOR.c_str());
@@ -127,7 +130,7 @@ int main() {
   float lastFrame = 0.0f; // Time of last frame
 
   while (!glfwWindowShouldClose(window)) {
-    float currentFrame = glfwGetTime();
+    float currentFrame = static_cast<float>(glfwGetTime());
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
@@ -185,7 +188,7 @@ int main() {
       theta += rotation_step;
       theta = std::fmod(theta, static_cast<float>(M_PI) * 2.0f);
 
-      time_end = glfwGetTime();
+      time_end = static_cast<float>(glfwGetTime());
       time_sum += time_end - time_start;
       time_start = time_end;
       ++count;

@@ -1,11 +1,13 @@
 #include <chrono>
+#include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/trigonometric.hpp>
 #include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
-#include "glad/glad.h"
+#include "common/shader.h"
+#include "common/Camera.h"
 #include "stb_image.h"
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
@@ -18,18 +20,15 @@
 #include <thread>
 #include <vector>
 
-unsigned int VBO;
-
 const std::string PROJ_DIR = "/home/lenty/scripts/cpp/opengl/";
 const std::string SUB_DIR = "ch12.1";
 
 const std::string VERTEX_SRC = PROJ_DIR + "src/" + SUB_DIR + "/vertex.sd";
-const std::string FRAGMENT_SRC = PROJ_DIR + "src/" + SUB_DIR + "/fragment.sd";
 
+const std::string FRAGMENT_SRC = PROJ_DIR + "src/" + SUB_DIR + "/fragment.sd";
 
 const std::string TEXTURE_PATH_FLOOR = PROJ_DIR + "assets/floor.jpg";
 const std::string TEXTURE_PATH_WALL = PROJ_DIR + "assets/wall.jpg";
-
 
 std::vector<unsigned int> vbos{};
 std::vector<unsigned int> vaos{};
@@ -38,6 +37,22 @@ std::vector<unsigned int> ebos{};
 void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
+}
+
+void processKeyEvent(GLFWwindow *window, Camera& camera,float deltaTime) {
+  static const float cameraSpeed = 0.2f * deltaTime; // adjust accordingly
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+    camera.Position += cameraSpeed * camera.Front;   
+    std::cout << camera.Position.x <<' ' << camera.Position.y << ' ' << camera.Position.z << " deltatime: " << deltaTime << " Front "<< camera.Front.x <<' ' << camera.Front.y << ' ' << camera.Front.z << std::endl;
+  }
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    camera.Position -= cameraSpeed * camera.Front;
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    camera.Position -=
+        glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    camera.Position +=
+        glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
 }
 
 void init_glfw() {
@@ -68,37 +83,42 @@ void load_glad() {
 
 unsigned int create_vao() {
   float vertices[] = {
-      // positions        
+      // positions        // texture st
       -0.5f, -0.5f, -0.5f,
       0.5f,  -0.5f, -0.5f,
       0.5f,  0.5f,  -0.5f,
       0.5f,  0.5f,  -0.5f,
       -0.5f, 0.5f,  -0.5f,
       -0.5f, -0.5f, -0.5f,
-      -0.5f, -0.5f, 0.5f, 
-      0.5f,  -0.5f, 0.5f, 
-      0.5f,  0.5f,  0.5f, 
-      0.5f,  0.5f,  0.5f, 
-      -0.5f, 0.5f,  0.5f, 
-      -0.5f, -0.5f, 0.5f, 
+
+      -0.5f, -0.5f, 0.5f,
+      0.5f,  -0.5f, 0.5f,
+      0.5f,  0.5f,  0.5f,
+      0.5f,  0.5f,  0.5f,
+      -0.5f, 0.5f,  0.5f,
+      -0.5f, -0.5f, 0.5f,
+
       -0.5f, 0.5f,  0.5f, 
       -0.5f, 0.5f,  -0.5f,
       -0.5f, -0.5f, -0.5f,
       -0.5f, -0.5f, -0.5f,
       -0.5f, -0.5f, 0.5f, 
       -0.5f, 0.5f,  0.5f, 
+
       0.5f,  0.5f,  0.5f, 
       0.5f,  0.5f,  -0.5f,
       0.5f,  -0.5f, -0.5f,
       0.5f,  -0.5f, -0.5f,
       0.5f,  -0.5f, 0.5f, 
       0.5f,  0.5f,  0.5f, 
+
       -0.5f, -0.5f, -0.5f,
       0.5f,  -0.5f, -0.5f,
       0.5f,  -0.5f, 0.5f, 
       0.5f,  -0.5f, 0.5f, 
       -0.5f, -0.5f, 0.5f, 
       -0.5f, -0.5f, -0.5f,
+
       -0.5f, 0.5f,  -0.5f,
       0.5f,  0.5f,  -0.5f,
       0.5f,  0.5f,  0.5f, 
@@ -107,21 +127,26 @@ unsigned int create_vao() {
       -0.5f, 0.5f,  -0.5f,
   };
 
-  unsigned int VAO;
+  unsigned int VBO;
 
   // bind the Vertex Array Object first, then bind and set vertex buffer(s), and
   // then configure vertex attributes(s).
-
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+  unsigned int VAO;
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
 
-  // args: layout num, type,xxx  ,stride, offset
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);  
+  glEnableVertexAttribArray(0);
+
+  // note that this is allowed, the call to glVertexAttribPointer registered VBO
+  // as the vertex attribute's bound vertex buffer object so afterwards we can
+  // safely unbind
+  vaos.push_back(VAO);
+  vbos.push_back(VBO);
   return VAO;
 }
 
@@ -142,11 +167,6 @@ unsigned int create_ebo(int vao) {
   // remember: do NOT unbind the EBO while a VAO is active as the bound element
   // buffer object IS stored in the VAO; keep the EBO bound.
   // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-  // You can unbind the VAO afterwards so other VAO calls won't accidentally
-  // modify this VAO, but this rarely happens. Modifying other VAOs requires a
-  // call to glBindVertexArray anyways so we generally don't unbind VAOs (nor
-  // VBOs) when it's not directly necessary.
 
   return EBO;
 }
@@ -196,4 +216,13 @@ unsigned int create_texture(const char *texture_path) {
   glGenerateMipmap(GL_TEXTURE_2D);
   stbi_image_free(image_data);
   return texture;
+}
+
+// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// ---------------------------------------------------------------------------------------------
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    // make sure the viewport matches the new window dimensions; note that width and 
+    // height will be significantly larger than specified on retina displays.
+    glViewport(0, 0, width, height);
 }

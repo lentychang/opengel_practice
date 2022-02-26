@@ -1,9 +1,9 @@
 #include "shader.h"
 #include <GLFW/glfw3.h>
 #include <fstream>
+#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <sstream>
-#include <glm/gtc/type_ptr.hpp>
 
 Shader::Shader(const char *vertexPath, const char *fragmentPath) {
   std::string vertexCode;
@@ -83,6 +83,8 @@ unsigned int Shader::create_program(unsigned int vertex,
 
 void Shader::use() { glUseProgram(mId); }
 
+void Shader::disable() { glUseProgram(0); }
+
 void Shader::setBool(const std::string &name, bool value) const {
   glUniform1i(glGetUniformLocation(mId, name.c_str()), (int)value);
 }
@@ -96,15 +98,15 @@ void Shader::setVec3(const std::string &name, float x, float y, float z) const {
   glUniform3f(glGetUniformLocation(mId, name.c_str()), x, y, z);
 }
 
-void Shader::setMat4f(const std::string &name,glm::mat4 const& mat) const{
-  int var = glGetUniformLocation(mId, name.c_str());
-      glUniformMatrix4fv(var, 1, GL_FALSE, glm::value_ptr(mat));
+void Shader::setVec3(const std::string &name, glm::vec3 const &vec3) const {
+  setVec3(name, vec3.x, vec3.y, vec3.z);
 }
 
-Shader::~Shader() {
-  // if (mId != std::numeric_limits<unsigned int>::max()) {
-  //   glDeleteProgram(mId);
-  // }
+void Shader::setMat4f(const std::string &name, glm::mat4 const &mat) const {
+  int var = glGetUniformLocation(mId, name.c_str());
+  glUniformMatrix4fv(var, 1, GL_FALSE, glm::value_ptr(mat));
 }
+
+Shader::~Shader() {}
 
 unsigned int Shader::getProgramId() { return mId; }
